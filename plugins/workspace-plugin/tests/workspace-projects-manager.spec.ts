@@ -112,6 +112,12 @@ const context: theia.PluginContext = {
     prepend: jest.fn(),
     replace: jest.fn(),
   },
+  secrets: {
+    get: jest.fn(),
+    delete: jest.fn(),
+    store: jest.fn(),
+    onDidChange: jest.fn(),
+  },
   extensionPath: '',
   extensionUri: uri,
   storageUri: uri,
@@ -519,5 +525,41 @@ describe('Test Workspace Projects Manager', () => {
 
     expect(appendLineMock).toBeCalledTimes(1);
     expect(appendLineMock).toBeCalledWith('failure to delete project');
+  });
+  test('Projects must be added to the default workspace', async () => {
+    getDevfileMock.mockReturnValue({
+      ...devfileWith_MultiRoot_On_Attribute,
+      projects: [firstProject, secondProject],
+    });
+    const mockWorkspace = {
+      ...workspace,
+      workspaceFile: {
+        path: '/projects/che.theia-workspace',
+      },
+      workspaceFolders: [],
+    };
+    pathExistsItems = ['/projects/che-theia', '/projects/theia'];
+    Object.assign(theia, { workspace: mockWorkspace });
+    await workspaceProjectsManager.run();
+    Object.assign(theia, { workspace });
+    expect(addWorkspaceFolderMock).toBeCalledTimes(2);
+  });
+  test('Project should be added to custom workspace only if it is declared on the *.theia-workspace config', async () => {
+    getDevfileMock.mockReturnValue({
+      ...devfileWith_MultiRoot_On_Attribute,
+      projects: [firstProject, secondProject],
+    });
+    pathExistsItems = ['/projects/che-theia', '/projects/theia', '/projects/a'];
+    const mockWorkspace = {
+      ...workspace,
+      workspaceFile: {
+        path: '/projects/custom.theia-workspace',
+      },
+      workspaceFolders: [{ uri: { path: '/projects/a' } }, { uri: { path: '/projects/che-theia' } }],
+    };
+    Object.assign(theia, { workspace: mockWorkspace });
+    await workspaceProjectsManager.run();
+    Object.assign(theia, { workspace });
+    expect(addWorkspaceFolderMock).toBeCalledTimes(1);
   });
 });

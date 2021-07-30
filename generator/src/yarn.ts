@@ -12,6 +12,7 @@ import * as path from 'path';
 
 import { CliError } from './cli-error';
 import { Command } from './command';
+import { Init } from './init';
 import { Logger } from './logger';
 
 /**
@@ -96,7 +97,22 @@ export class Yarn {
             nodePackages.map(e => e.path).filter((value, index, array) => index === array.indexOf(value))
         );
     }
-
+    /**
+     * Exclude dependencies which defined on excludedPackages
+     *
+     * @protected
+     * @param {string} pkg
+     * @returns
+     * @memberof Yarn
+     */
+    protected isExcluded(pkg: string) {
+        const exist = this.excludedPackages.indexOf(pkg) !== -1;
+        if (exist) {
+            Logger.debug(` --> Excluding the dependency ${pkg}`);
+            return true;
+        }
+        return false;
+    }
     /**
      * Find from children all the direct dependencies. Also exclude some dependencies by not analyzing them.
      * Allow as well to report error in case of a forbidden dependency found
@@ -109,9 +125,9 @@ export class Yarn {
         nodeTreeDependencies: Map<string, string[]>,
         subsetDependencies: string[]
     ): void {
-        children.map(child => {
+        children.forEach(child => {
             // only loop on exist
-            if (subsetDependencies.indexOf(child) >= 0) {
+            if (subsetDependencies.indexOf(child) >= 0 || this.isExcluded(child)) {
                 return;
             }
             subsetDependencies.push(child);
@@ -119,13 +135,7 @@ export class Yarn {
             // loop on children in any
             let depChildren = nodeTreeDependencies.get(child);
             if (depChildren) {
-                depChildren = depChildren.filter(depChild => {
-                    const res = this.excludedPackages.indexOf(depChild) < 0;
-                    if (!res) {
-                        Logger.debug(` --> Excluding the dependency ${depChild}`);
-                    }
-                    return res;
-                });
+                depChildren = depChildren.filter(depChild => !this.isExcluded(depChild));
 
                 const matching: string[] = [];
                 const foundForbiddenPackage = depChildren.some(r => {
@@ -205,4 +215,21 @@ export interface INodePackage {
 export interface IYarnNode {
     name: string;
     children: IYarnNode[];
+}
+
+/**
+ * Returns the full package name of an installed package or the emtpy string if not installed
+ */
+export async function getFullPackageName(rootFolder: string, name: string): Promise<string> {
+    const pkg = JSON.parse(await new Command(path.resolve(rootFolder)).exec(Init.GET_PACKAGE_WITH_VERSION_CMD + name))
+        .data.trees[0];
+    return pkg ? pkg.name : '';
+}
+
+/**
+ * Returns the version of an installed package or the emtpy string if not installed
+ */
+export async function getPackageVersion(rootFolder: string, name: string) {
+    const nameWithVersion = getFullPackageName(rootFolder, name);
+    return (await nameWithVersion).split('@').pop() || '';
 }
