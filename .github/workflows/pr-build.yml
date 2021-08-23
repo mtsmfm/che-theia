@@ -33,7 +33,7 @@ jobs:
   docker-build:
     strategy:
       matrix:
-        dist: [ 'alpine', 'ubi8' ]
+        dist: [ 'alpine' ]
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
@@ -48,3 +48,28 @@ jobs:
         docker pull quay.io/eclipse/che-theia-dev:next
         docker tag quay.io/eclipse/che-theia-dev:next eclipse/che-theia-dev:next
         ./build.sh --root-yarn-opts:--ignore-scripts --dockerfile:Dockerfile.${{matrix.dist}}
+    - uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - id: meta
+      uses: docker/metadata-action@v3
+      with:
+        images: |
+          ghcr.io/${{ github.repository }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr,prefix=pr-
+          type=sha,prefix=sha-
+    - name: "Build and push ${{ matrix.platform }}"
+      uses: docker/build-push-action@v2
+      with:
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache
+        context: ./${{ env.DIR_DASHBOARD }}
+        file: ./${{ env.DIR_DASHBOARD }}/build/dockerfiles/Dockerfile
+        platforms: ${{ matrix.platform }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
