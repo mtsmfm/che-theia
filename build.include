@@ -11,11 +11,11 @@ set -e
 set -u
 
 IMAGE_TAG="next"
-THEIA_GITHUB_REPO="eclipse-theia/theia"
-THEIA_VERSION="master"
-THEIA_BRANCH="master"
+THEIA_GITHUB_REPO="mtsmfm/theia"
+THEIA_VERSION="cancellation-error-debug"
+THEIA_BRANCH="cancellation-error-debug"
 THEIA_COMMIT_SHA=
-THEIA_GIT_REFS="refs\\/heads\\/master"
+THEIA_GIT_REFS="refs\\/heads\\/cancellation-error-debug"
 THEIA_DOCKER_IMAGE_VERSION=
 
 prepare_yarn_root_args() {
