@@ -28,7 +28,7 @@ jobs:
         ./build.sh --root-yarn-opts:--ignore-scripts --dockerfile:Dockerfile.alpine
     - run: |
         docker tag eclipse/che-theia:next ghcr.io/${{ github.repository }}:che-theia--sha-${{ github.event.pull_request.head.sha }}
-        docker push ghcr.io/${{ github.repository }}:sha-${{ github.event.pull_request.head.sha }}
+        docker push ghcr.io/${{ github.repository }}:che-theia--sha-${{ github.event.pull_request.head.sha }}
     - run: |
         docker tag eclipse/che-theia-endpoint-runtime-binary:next ghcr.io/${{ github.repository }}:che-theia-endpoint-runtime-binary--sha-${{ github.event.pull_request.head.sha }}
-        docker push ghcr.io/${{ github.repository }}:sha-${{ github.event.pull_request.head.sha }}
+        docker push ghcr.io/${{ github.repository }}:che-theia-endpoint-runtime-binary--sha-${{ github.event.pull_request.head.sha }}
