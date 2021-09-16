@@ -237,7 +237,7 @@ export class RemoteTerminalWidget extends TerminalWidgetImpl {
       // On k8s with docker, ctrl-p ctrl-q is default detach keys and currently there's no way to customize.
       // https://github.com/kubernetes/kubectl/issues/1011
       if (data === '\u0010') {
-        this.socket.send('\u0000');
+        this.socket.send('\u001B');
       }
     };
 
